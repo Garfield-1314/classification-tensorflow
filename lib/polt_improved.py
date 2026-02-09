@@ -27,8 +27,8 @@ def plot_combined_curves_improved(history_list):
         all_epochs.extend(epochs)
         global_epoch += len(history.history['loss'])
 
-    # 创建 train 文件夹（如果不存在）
-    save_dir = 'train'
+    # 创建 model 文件夹（如果不存在）
+    save_dir = 'model'
     if not os.path.exists(save_dir):
         os.makedirs(save_dir)
 
