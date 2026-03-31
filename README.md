@@ -67,7 +67,7 @@ python test/GPU_test.py
 ```
 
 **运行自动化流程测试**:
-项目提供了 `test/test.py` 脚本，该脚本会自动加载 **MNIST 数据集**，并将其转换为 224x224 RGB 格式，以测试从训练到 TFLite INT8 量化导出的全流程：
+项目提供了 `test/test.py` 脚本，该脚本会自动加载 **MNIST 数据集**，并将其转换为 32x32 RGB 格式，以测试从训练到 TFLite INT8 量化导出的全流程：
 ```bash
 python test/test.py
 ```
