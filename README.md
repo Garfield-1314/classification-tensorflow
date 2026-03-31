@@ -42,24 +42,34 @@ pip install -r requirements.txt -i https://pypi.tuna.tsinghua.edu.cn/simple
 classification-tensorflow/
 ├── train.ipynb          # 主训练脚本 (Jupyter Notebook)
 ├── model_test.py        # TFLite 模型测试与推理脚本
-├── GPU_test.py          # GPU 环境可用性检测
 ├── requirements.txt     # 项目依赖列表
+├── test/                # 测试与验证目录
+│   ├── GPU_test.py      # GPU 环境可用性检测
+│   └── test.py          # 流程完整性测试脚本 (支持 MNIST 自动测试)
 ├── lib/                 # 自定义工具库
 │   ├── AU.py            # 数据预处理与增强
 │   ├── polt_improved.py # 曲线绘制工具
 │   └── show_img.py      # 图像可视化工具
 ├── model/               # 模型输出目录 (自动生成)
-└── labels/              # 类别标签输出目录 (自动生成)
+└── cache/               # 数据缓存目录 (自动生成)
 ```
 
 ---
 
 ## 📖 使用指南
 
-### 1. 环境验证
-在开始训练前，运行以下命令验证 GPU 环境是否配置正确：
+### 1. 环境验证与流程测试
+在开始大规模训练前，建议先进行环境验证。
+
+**检测 GPU 状态**:
 ```bash
-python GPU_test.py
+python test/GPU_test.py
+```
+
+**运行自动化流程测试**:
+项目提供了 `test/test.py` 脚本，该脚本会自动加载 **MNIST 数据集**，并将其转换为 224x224 RGB 格式，以测试从训练到 TFLite INT8 量化导出的全流程：
+```bash
+python test/test.py
 ```
 
 ### 2. 数据准备
