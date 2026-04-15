@@ -38,6 +38,8 @@ test_dataset = tf.keras.preprocessing.image_dataset_from_directory(
 class_names = test_dataset.class_names
 print(class_names)
 num_classes = len(class_names)
+
+
 def preprocess_image(image):
     """根据模型需求预处理图像"""
     # 量化模型通常需要uint8输入，若训练时已归一化则无需额外处理
@@ -47,6 +49,7 @@ def preprocess_image(image):
         # 若模型需要float输入，进行归一化（示例为除以255）
         return tf.cast(image, tf.float32) / 255.0
 
+
 def predict_batch(images):
     """批量推理提升效率"""
     # 预处理整个batch
@@ -54,11 +57,12 @@ def predict_batch(images):
     for img in images:
         processed_images.append(preprocess_image(img))
     input_data = np.array(processed_images, dtype=input_dtype)
-    
+
     # 推理
     interpreter.set_tensor(input_details[0]['index'], input_data)
     interpreter.invoke()
     return interpreter.get_tensor(output_details[0]['index'])
+
 
 # 初始化统计变量
 correct_predictions = np.zeros(num_classes)
@@ -67,7 +71,7 @@ total_predictions = np.zeros(num_classes)
 for images, labels in tqdm(test_dataset, desc="测试进度"):
     batch_preds = predict_batch(images)
     predicted_labels = np.argmax(batch_preds, axis=1)
-    
+
     # 更新统计
     for true_label, pred_label in zip(labels.numpy(), predicted_labels):
         total_predictions[true_label] += 1
@@ -81,7 +85,7 @@ for i in range(num_classes):
         class_accuracies[i] = correct_predictions[i] / total_predictions[i]
     else:
         class_accuracies[i] = 0.0
-class_accuracies_percentage = class_accuracies * 100 
+class_accuracies_percentage = class_accuracies * 100
 
 # 绘制柱状图
 plt.figure(figsize=(12, 6))
@@ -90,9 +94,11 @@ bars = plt.bar(class_names, class_accuracies_percentage, color='skyblue')
 # 添加数值标签
 for bar, acc in zip(bars, class_accuracies_percentage):
     height = bar.get_height()
-    plt.text(bar.get_x() + bar.get_width()/2., height,
+    plt.text(bar.get_x() + bar.get_width() / 2.,
+             height,
              f'{acc:.1f}%',
-             ha='center', va='bottom')
+             ha='center',
+             va='bottom')
 
 plt.xlabel('class')
 plt.ylabel('acc (%)')
@@ -118,8 +124,6 @@ plt.show()
 # 打印保存路径
 print(f"柱状图已保存到: {save_path}")
 
-
-
 print("\n各类别准确率：")
 for i in range(num_classes):
     class_name = class_names[i].ljust(15)  # 对齐类名
@@ -130,7 +134,8 @@ for i in range(num_classes):
 # 计算整体准确率
 total_correct = np.sum(correct_predictions)
 total_samples = np.sum(total_predictions)
-overall_accuracy = (total_correct / total_samples) * 100 if total_samples > 0 else 0
+overall_accuracy = (total_correct /
+                    total_samples) * 100 if total_samples > 0 else 0
 
 # 打印整体准确率（带醒目格式）
 print("\n\033[1;36m" + "-" * 50)

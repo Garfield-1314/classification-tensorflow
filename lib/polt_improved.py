@@ -2,6 +2,7 @@ import matplotlib.pyplot as plt
 import os
 from datetime import datetime
 
+
 def plot_combined_curves_improved(history_list):
     """
     改进的合并曲线绘制函数，动态调整 x 轴范围，并将图像保存到 train 文件夹中
@@ -19,7 +20,8 @@ def plot_combined_curves_improved(history_list):
 
     # 遍历每个阶段的历史记录，提取数据并分配全局 epoch 编号
     for history in history_list:
-        epochs = range(global_epoch + 1, global_epoch + 1 + len(history.history['loss']))
+        epochs = range(global_epoch + 1,
+                       global_epoch + 1 + len(history.history['loss']))
         all_train_loss.extend(history.history['loss'])
         all_val_loss.extend(history.history['val_loss'])
         all_train_accuracy.extend(history.history['accuracy'])
@@ -45,7 +47,11 @@ def plot_combined_curves_improved(history_list):
     # 绘制 loss 曲线
     plt.subplot(1, 2, 1)
     plt.plot(all_epochs, all_train_loss, label='Train Loss', color='blue')
-    plt.plot(all_epochs, all_val_loss, label='Validation Loss', color='orange', linestyle='--')
+    plt.plot(all_epochs,
+             all_val_loss,
+             label='Validation Loss',
+             color='orange',
+             linestyle='--')
     plt.title('Combined Loss Curves')
     plt.xlabel('Global Epochs')
     plt.ylabel('Loss')
@@ -53,8 +59,15 @@ def plot_combined_curves_improved(history_list):
 
     # 绘制 accuracy 曲线
     plt.subplot(1, 2, 2)
-    plt.plot(all_epochs, all_train_accuracy, label='Train Accuracy', color='green')
-    plt.plot(all_epochs, all_val_accuracy, label='Validation Accuracy', color='red', linestyle='--')
+    plt.plot(all_epochs,
+             all_train_accuracy,
+             label='Train Accuracy',
+             color='green')
+    plt.plot(all_epochs,
+             all_val_accuracy,
+             label='Validation Accuracy',
+             color='red',
+             linestyle='--')
     plt.title('Combined Accuracy Curves')
     plt.xlabel('Global Epochs')
     plt.ylabel('Accuracy')
