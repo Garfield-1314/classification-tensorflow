@@ -1,6 +1,8 @@
 # Jupyter Notebook - 代码
 
 # 导入必要的库
+import sys
+sys.path.insert(0, '.')
 import matplotlib.pyplot as plt
 import numpy as np
 import os, shutil
@@ -16,7 +18,7 @@ tf.get_logger().setLevel('ERROR')
 # 🔹 超参数
 IMG_SIZE = (32, 32)
 AUTOTUNE = tf.data.AUTOTUNE
-IMG_SHAPE = IMG_SIZE + (3, )
+IMG_SHAPE = IMG_SIZE + (3,)
 
 # 创建model目录（如果不存在）
 model_dir = 'model'
