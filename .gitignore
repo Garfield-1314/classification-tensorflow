@@ -2,4 +2,6 @@
 /model
 /cache
 /lib/__pycache__
-/path
+/path/
+/.vscode/
+*.log
