@@ -6,7 +6,7 @@ def check_gpu_availability():
     print(f"TensorFlow 版本: {tf.__version__}")
 
     gpu_available = tf.config.list_physical_devices('GPU')
-    print("\nGPU 可用状态:", "可用 ✅" if gpu_available else "不可用 ❌")
+    print("\nGPU 可用状态:", "可用 [OK]" if gpu_available else "不可用 [X]")
 
     if gpu_available:
         print("\nGPU 设备信息:")
@@ -24,9 +24,8 @@ def check_gpu_availability():
                 # 旧版本获取显存的方法
                 from tensorflow.python.client import device_lib
                 local_devices = device_lib.list_local_devices()
-                gpu_info = [
-                    x for x in local_devices if x.device_type == 'GPU'
-                ][i]
+                gpu_info = [x for x in local_devices if x.device_type == 'GPU'
+                           ][i]
                 print(
                     f"  显存大小: {int(gpu_info.memory_limit // 1024 // 1024)} MB (兼容模式)"
                 )
