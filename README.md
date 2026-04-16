@@ -1,3 +1,5 @@
+[![](https://img.shields.io/badge/lang-English-blue.svg)](README.md) [![](https://img.shields.io/badge/lang-中文-red.svg)](README_CN.md)
+
 # TensorFlow 图像分类与 TFLite 量化项目
 
 [![TensorFlow](https://img.shields.io/badge/TensorFlow-2.10.0-orange.svg)](https://tensorflow.org)
@@ -7,8 +9,6 @@
 这是一个基于 TensorFlow 的图像分类项目，专注于高效模型训练与 TFLite 全整型 (INT8) 量化，旨在将深度学习模型部署到边缘设备。
 
 ---
-
-[![](https://img.shields.io/badge/lang-English-blue.svg)](README.md) [![](https://img.shields.io/badge/lang-中文-red.svg)](README_CN.md)
 
 # TensorFlow Image Classification and TFLite Quantization
 [![TensorFlow](https://img.shields.io/badge/TensorFlow-2.10.0-orange.svg)](https://tensorflow.org)
