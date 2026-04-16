@@ -8,107 +8,105 @@
 
 ---
 
-## 🚀 项目特性
+[![](https://img.shields.io/badge/lang-English-blue.svg)](README.md) [![](https://img.shields.io/badge/lang-中文-red.svg)](README_CN.md)
 
-- **轻量化主干网络**: 默认采用 **MobileNetV2**，并支持多阶段微调（Fine-tuning）。
-- **全整型量化**: 包含完整的 TFLite INT8 量化流程，大幅降低模型体积并加速推理。
-- **自动化工具**: 
-  - 自动生成 `labels.txt`。
-  - 自动化可视化训练曲线与混淆矩阵。
-  - GPU 环境检测脚本 `GPU_test.py`。
-- **代码结构清晰**: 逻辑清晰的 `train.ipynb` 操作手册。
+# TensorFlow Image Classification and TFLite Quantization
+[![TensorFlow](https://img.shields.io/badge/TensorFlow-2.10.0-orange.svg)](https://tensorflow.org)
+[![Python](https://img.shields.io/badge/Python-3.8-blue.svg)](https://python.org)
+
+This repository provides reproducible training pipelines, model export utilities, and a TFLite INT8 quantization workflow for deploying image classification models on edge devices.
+---
+
+## Key updates (recent refactor)
+
+- Added `train.py` — a command-line training and export script refactored from `train.ipynb`.
+- Improved `model_test.py` — evaluate `.tflite` models and plot per-class accuracy bar charts.
+- Kept `test/test.py` as an end-to-end MNIST example (label file generation and TFLite export).
 
 ---
 
-## 🛠️ 环境要求
 
-### 系统环境
-- **操作系统**: Windows / Linux
-- **Python**: 3.8
-- **CUDA**: 11.8
-- **cuDNN**: 8.9.7
+## Requirements
 
-### 依赖安装
-推荐使用清华镜像源加速安装：
+- OS: Windows or Linux
+- Python 3.8 (virtual environment recommended)
+- For GPU: compatible CUDA and cuDNN versions for the installed TensorFlow build
+
+Install dependencies:
+
 ```bash
 pip install -r requirements.txt -i https://pypi.tuna.tsinghua.edu.cn/simple
 ```
 
 ---
 
-## 📂 目录结构
+## Repository layout
 
 ```text
 classification-tensorflow/
-├── train.ipynb          # 主训练脚本 (Jupyter Notebook)
-├── model_test.py        # TFLite 模型测试与推理脚本
-├── requirements.txt     # 项目依赖列表
-├── test/                # 测试与验证目录
-│   ├── GPU_test.py      # GPU 环境可用性检测
-│   └── test.py          # 流程完整性测试脚本 (支持 MNIST 自动测试)
-├── lib/                 # 自定义工具库
-│   ├── AU.py            # 数据预处理与增强
-│   ├── polt_improved.py # 曲线绘制工具
-│   └── show_img.py      # 图像可视化工具
-├── model/               # 模型输出目录 (自动生成)
-└── cache/               # 数据缓存目录 (自动生成)
+├── train.ipynb          # Jupyter notebook (interactive)
+├── train.py             # CLI training and export script (refactored)
+├── model_test.py        # Evaluate .tflite models and plot per-class accuracies
+├── requirements.txt     # Python dependencies
+├── test/                # Example & test scripts
+│   ├── GPU_test.py      # GPU availability check
+│   └── test.py          # MNIST end-to-end example (train -> export -> evaluate)
+├── lib/                 # Utilities (preprocessing, plotting, etc.)
+├── model/               # Output models
+└── cache/               # Runtime caches
 ```
 
 ---
 
-## 📖 使用指南
+## Quick start
 
-### 1. 环境验证与流程测试
-在开始大规模训练前，建议先进行环境验证。
+Check GPU availability:
 
-**检测 GPU 状态**:
 ```bash
 python test/GPU_test.py
 ```
 
-**运行自动化流程测试**:
-项目提供了 `test/test.py` 脚本，该脚本会自动加载 **MNIST 数据集**，并将其转换为 32x32 RGB 格式，以测试从训练到 TFLite INT8 量化导出的全流程：
+Run the MNIST end-to-end example:
+
 ```bash
 python test/test.py
 ```
 
-### 2. 数据准备
-将你的数据集按照以下结构存放：
-```text
-yourdataset/
-├── train/
-│   ├── class_a/
-│   └── class_b/
-└── val/
-    ├── class_a/
-    └── class_b/
+This example converts MNIST to 32x32 RGB, trains a small MobileNetV2 model, exports a TFLite model and writes labels to `model/labels_<timestamp>.txt`.
+
+Train with `train.py` (command line):
+
+```bash
+# Edit `base_dir` in train.py to point to your dataset root containing `train/` and `val/`
+python train.py
 ```
-并在 `train.ipynb` 中修改 `base_dir` 变量。
 
-### 3. 模型训练
-打开 `train.ipynb`，按照以下步骤运行：
-- **阶段一**: 模型基础训练与收敛。
-- **阶段二**: 二次微调或特定数据处理。
-- **量化导出**: 自动运行 `representative_dataset` 进行校准，并导出全整型量化模型。
+`train.py` runs a two-stage training process: stage 1 saves `stage1_model.h5`, stage 2 fine-tunes and exports a timestamped `model_YYYYMMDD_HHMM.tflite`.
 
-### 4. 模型评估
-使用 `model_test.py` 对导出的 `.tflite` 模型进行快速测试。修改脚本中的 `model_path` 指向生成的模型文件即可。
+Evaluate a .tflite model:
 
----
+```bash
+# Modify MODEL_PATH and TEST_DIR in model_test.py or update variables in the script
+python model_test.py
+```
 
-## 📊 结果展示
-
-项目会自动生成：
-- **训练曲线**: 准确率与损失值的交互对比图。
-- **混淆矩阵**: 用于衡量模型在各个类别上的表现。
-- **测试报告**: 包含每个类别的 Top-1 准确率统计柱状图。
+`model_test.py` loads the specified `.tflite`, evaluates images organized by class under `TEST_DIR`, and saves a per-class accuracy bar chart (to the `test/` directory by default).
 
 ---
 
-## 🔗 相关项目与参考
+## Output conventions
+
+- TFLite export example: `model/model_YYYYMMDD_HHMM.tflite`
+- Label file example: `model/labels_YYYYMMDD_HHMM.txt`
+
+---
+
+## References
+
 - [TensorFlow Lite Guide](https://www.tensorflow.org/lite/guide)
 - [MobileNetV2 Paper](https://arxiv.org/abs/1801.04381)
 
+---
 
 
 
