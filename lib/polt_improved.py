@@ -6,7 +6,7 @@ curves. The function accepts an iterable of Keras History objects.
 """
 
 from pathlib import Path
-from typing import Iterable, List
+from typing import Iterable, List, Union
 
 import matplotlib.pyplot as plt
 from datetime import datetime
@@ -15,13 +15,12 @@ from datetime import datetime
 MODEL_DIR = Path("model")
 
 
-def plot_combined_curves_improved(history_list: Iterable) -> Path:
-    """Plot combined loss and accuracy curves from multiple history objects.
+def plot_combined_curves_improved(history_list: Iterable, save_dir: Union[str, Path] = MODEL_DIR) -> Path:
+    """Plot combined loss and accuracy curves and save to save_dir.
 
     Args:
-        history_list: Iterable of Keras ``History`` objects (e.g. training
-            phases). Each object must expose a ``history`` dict with keys
-            ``loss``, ``val_loss``, ``accuracy`` and ``val_accuracy``.
+        history_list: Iterable of Keras ``History`` objects.
+        save_dir: Directory to save the resulting plot.
 
     Returns:
         The filesystem ``Path`` to the saved image.
@@ -44,9 +43,9 @@ def plot_combined_curves_improved(history_list: Iterable) -> Path:
         all_epochs.extend(epochs)
         global_epoch += length
 
-    MODEL_DIR.mkdir(parents=True, exist_ok=True)
-    current_date = datetime.now().strftime("%Y-%m-%d")
-    save_path = MODEL_DIR / f"{current_date}_combined_curves.png"
+    save_dir = Path(save_dir)
+    save_dir.mkdir(parents=True, exist_ok=True)
+    save_path = save_dir / "training_curves.png"
 
     plt.figure(figsize=(14, 6))
 

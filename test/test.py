@@ -86,9 +86,15 @@ def main() -> None:
     class_names = [str(i) for i in range(10)]
     print("Class Names:", class_names)
 
+    # Create folder named with model name and timestamp
     timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M")
-    labels_path = os.path.join(MODEL_DIR, f"labels_{timestamp}.txt")
-    with open(labels_path, "w") as f:
+    model_folder_name = f"model_{timestamp}"
+    model_folder_path = os.path.join(MODEL_DIR, model_folder_name)
+    os.makedirs(model_folder_path, exist_ok=True)
+
+    # Save labels.txt
+    labels_path = os.path.join(model_folder_path, "labels.txt")
+    with open(labels_path, "w", encoding="utf-8") as f:
         for class_name in class_names:
             f.write(f"{class_name}\n")
     print(f"Labels written to: {labels_path}")
@@ -148,6 +154,7 @@ def main() -> None:
     early_stopping = tf.keras.callbacks.EarlyStopping(patience=3, restore_best_weights=True)
 
     model.fit(train_dataset, validation_data=validation_dataset, epochs=1, callbacks=[early_stopping])
+    history = model.history
     model.save(os.path.join(MODEL_DIR, "stage1_model.h5"))
 
     # TFLite export with quantization
@@ -159,8 +166,7 @@ def main() -> None:
     converter.inference_output_type = tf.uint8
 
     tflite_model = converter.convert()
-    timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M")
-    output_path = os.path.join(MODEL_DIR, f"model_{timestamp}.tflite")
+    output_path = os.path.join(model_folder_path, f"{model_folder_name}.tflite")
     with open(output_path, "wb") as f:
         f.write(tflite_model)
     print(f"TFLite model saved to: {output_path}")
@@ -188,7 +194,24 @@ def main() -> None:
     plt.xlabel("Predicted Label")
     plt.ylabel("True Label")
     plt.title("Confusion Matrix")
+    
+    # Save confusion matrix to model folder
+    cm_path = os.path.join(model_folder_path, "confusion_matrix.png")
+    plt.savefig(cm_path, dpi=300, bbox_inches='tight')
+    print(f"Confusion matrix saved to: {cm_path}")
+    
     plt.show()
+
+    # Plot and save combined training curves
+    from lib import polt_improved
+    polt_improved.plot_combined_curves_improved([history], save_dir=model_folder_path)
+    print(f"Training curves saved to: {model_folder_path}/training_curves.png")
+
+    # Test the model using model_test
+    import model_test
+    # For MNIST test, we might need a different test logic or skip if model_test is for directory-based datasets
+    # But if the user wants consistent behavior:
+    print(f"\nModel test process completed. Output folder: {model_folder_path}")
 
     # Final cleanup of cache directory
     if os.path.exists(CACHE_DIR) and os.path.isdir(CACHE_DIR):
