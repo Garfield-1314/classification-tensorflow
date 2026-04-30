@@ -13,13 +13,15 @@ import shutil
 import sys
 from datetime import datetime
 from pathlib import Path
-from typing import Tuple, Iterable
+from typing import Tuple, Iterable, Union
 
 import matplotlib.pyplot as plt
 import numpy as np
 import seaborn as sns
 import tensorflow as tf
 from tqdm import tqdm
+
+import model_test
 
 # Ensure project root is reachable when running the script directly.
 sys.path.insert(0, str(Path(__file__).resolve().parents[0]))
@@ -28,12 +30,12 @@ from lib import AU, polt_improved  # noqa: E402
 
 
 # Constants
-IMG_SIZE = (224, 224)
+IMG_SIZE = (160, 160)
 AUTOTUNE = tf.data.AUTOTUNE
 IMG_SHAPE = IMG_SIZE + (3,)
 MODEL_DIR = "model"
 CACHE_DIR = "cache"
-BATCH_SIZE = 32
+BATCH_SIZE = 16
 
 
 def prepare_datasets(base_dir: str, augment: bool = False) -> Tuple[tf.data.Dataset, tf.data.Dataset, list]:
@@ -78,12 +80,6 @@ def prepare_datasets(base_dir: str, augment: bool = False) -> Tuple[tf.data.Data
         .prefetch(AUTOTUNE)
     )
 
-    # Warm-up caches
-    for _ in train_ds:
-        break
-    for _ in val_ds:
-        break
-
     return train_ds, val_ds, class_names
 
 
@@ -98,7 +94,7 @@ def build_model(num_classes: int) -> tf.keras.Model:
         [
             tf.keras.layers.Rescaling(1.0 / 255),
             base_model,
-            tf.keras.layers.Dropout(0.1),
+            tf.keras.layers.Dropout(0.8),
             tf.keras.layers.Dense(num_classes, activation="softmax"),
         ]
     )
@@ -126,10 +122,10 @@ def train_model(model: tf.keras.Model, train_ds: tf.data.Dataset, val_ds: tf.dat
     return history
 
 
-def export_tflite(model: tf.keras.Model, validation_raw: tf.data.Dataset, output_dir: str = MODEL_DIR) -> str:
-    """Export the provided Keras model to a quantized TFLite file.
+def export_tflite(model: tf.keras.Model, validation_raw: tf.data.Dataset, class_names: list, output_dir: str = MODEL_DIR) -> Tuple[str, str]:
+    """Export the provided Keras model to a quantized TFLite file and save labels.
 
-    Returns the path to the saved tflite model.
+    Returns a tuple (tflite_path, model_folder_path).
     """
 
     def representative_dataset():
@@ -148,19 +144,32 @@ def export_tflite(model: tf.keras.Model, validation_raw: tf.data.Dataset, output
 
     tflite_model = converter.convert()
 
-    os.makedirs(output_dir, exist_ok=True)
+    # Create folder named with model name and timestamp
     timestamp = datetime.now().strftime("%Y%m%d_%H%M")
-    out_path = os.path.join(output_dir, f"model_{timestamp}.tflite")
+    model_folder_name = f"model_{timestamp}"
+    model_folder_path = os.path.join(output_dir, model_folder_name)
+    os.makedirs(model_folder_path, exist_ok=True)
+
+    # Save TFLite model
+    tflite_name = f"{model_folder_name}.tflite"
+    out_path = os.path.join(model_folder_path, tflite_name)
     with open(out_path, "wb") as f:
         f.write(tflite_model)
 
-    return out_path
+    # Save labels.txt
+    labels_path = os.path.join(model_folder_path, "labels.txt")
+    with open(labels_path, "w", encoding="utf-8") as f:
+        for name in class_names:
+            f.write(f"{name}\n")
+
+    return out_path, model_folder_path
 
 
-def evaluate_confusion_matrix(model: tf.keras.Model, val_ds: tf.data.Dataset, class_names: Iterable[str]) -> None:
+def evaluate_confusion_matrix(model: tf.keras.Model, val_ds: tf.data.Dataset, class_names: Iterable[str], save_path: Union[str, None] = None) -> None:
     """Compute and plot confusion matrix on validation dataset."""
 
-    y_pred = np.argmax(model.predict(val_ds), axis=1)
+    y_pred_probs = model.predict(val_ds)
+    y_pred = np.argmax(y_pred_probs, axis=1)
     y_true = np.concatenate([labels.numpy() for _, labels in val_ds])
 
     from sklearn.metrics import confusion_matrix
@@ -171,6 +180,11 @@ def evaluate_confusion_matrix(model: tf.keras.Model, val_ds: tf.data.Dataset, cl
     plt.xlabel("Predicted Label")
     plt.ylabel("True Label")
     plt.title("Confusion Matrix")
+    
+    if save_path:
+        plt.savefig(save_path, dpi=300, bbox_inches='tight')
+        print(f"Confusion matrix saved to: {save_path}")
+    
     plt.show()
 
 
@@ -180,9 +194,9 @@ def main() -> None:
     os.makedirs(MODEL_DIR, exist_ok=True)
 
     # Example: set this to your dataset root which contains `train` and `val`.
-    base_dir = "your_dataset_path"
-    epochs1 = 20
-    epochs2 = 5
+    base_dir = '../Datasets/smartcar26_dataset' 
+    epochs1 = 30
+    epochs2 = 10
     # Stage 1: train without augmentation
     train_ds, val_ds, class_names = prepare_datasets(base_dir, augment=False)
     model = build_model(len(class_names))
@@ -196,13 +210,32 @@ def main() -> None:
     history2 = train_model(model, train_ds2, val_ds2, epochs=epochs2)
 
     # Export and evaluation
-    tflite_path = export_tflite(model, val_ds)
+    tflite_path, model_folder_path = export_tflite(model, val_ds, class_names)
     print(f"TFLite model saved to: {tflite_path}")
 
-    evaluate_confusion_matrix(model, val_ds, class_names)
+    # Save stage 1 model to the model folder as well
+    stage1_h5_dest = os.path.join(model_folder_path, "stage1_model.h5")
+    shutil.copy(os.path.join(MODEL_DIR, "stage1_model.h5"), stage1_h5_dest)
+    print(f"Stage 1 model saved to: {stage1_h5_dest}")
+
+    cm_save_path = os.path.join(model_folder_path, "confusion_matrix.png")
+    evaluate_confusion_matrix(model, val_ds, class_names, save_path=cm_save_path)
 
     # Combined curves
-    polt_improved.plot_combined_curves_improved([history1, history2])
+    polt_improved.plot_combined_curves_improved([history1, history2], save_dir=model_folder_path)
+
+    # Test the model using model_test
+    # Assuming test directory is at '../Datasets/smartcar26_dataset/test'
+    test_dir = os.path.join(os.path.dirname(base_dir), 'smartcar26_dataset', 'test')
+    if os.path.exists(test_dir):
+        print(f"\nStarting model test using model_test.py...")
+        model_test.main(model_path=tflite_path, test_dir=test_dir)
+    else:
+        # Fallback if specific dataset structure is different
+        test_dir_alt = os.path.join(base_dir, 'test')
+        if os.path.exists(test_dir_alt):
+            print(f"\nStarting model test using model_test.py...")
+            model_test.main(model_path=tflite_path, test_dir=test_dir_alt)
 
     # Cleanup cache directory
     if os.path.exists(CACHE_DIR) and os.path.isdir(CACHE_DIR):
