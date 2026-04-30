@@ -15,8 +15,8 @@ from tqdm import tqdm
 
 
 # Configuration constants
-MODEL_PATH = 'your_model.tflite'  # Replace with your model path
-TEST_DIR = os.path.join('yourdataset', 'test')  # Ensure this directory exists
+MODEL_PATH = './model/model_20260427_1518.tflite'  # Replace with your model path
+TEST_DIR = os.path.join('../Datasets/smartcar26_dataset', 'test')  # Ensure this directory exists
 BATCH_SIZE = 1  # Increase for better throughput if memory allows
 
 
@@ -177,7 +177,7 @@ def plot_class_accuracies(class_names: List[str], accuracies: np.ndarray, save_d
     return save_path
 
 
-def main() -> None:
+def main(model_path: str = MODEL_PATH, test_dir: str = TEST_DIR) -> None:
     """Main entrypoint: load model, evaluate dataset, and plot results."""
     (
         interpreter,
@@ -185,16 +185,20 @@ def main() -> None:
         output_details,
         input_dtype,
         img_size,
-    ) = load_interpreter(MODEL_PATH)
+    ) = load_interpreter(model_path)
 
     print(f"模型输入尺寸: {img_size[0]}x{img_size[1]}, 数据类型: {input_dtype}")
 
     class_names, correct_predictions, total_predictions = evaluate_dataset(
-        interpreter, input_details, output_details, input_dtype, img_size, TEST_DIR, BATCH_SIZE
+        interpreter, input_details, output_details, input_dtype, img_size, test_dir, BATCH_SIZE
     )
 
+    # If model is in a subdirectory, use that as save directory
+    model_dir = os.path.dirname(model_path)
+    save_dir = model_dir if model_dir and model_dir != '.' else 'test'
+
     accuracies = compute_accuracies(correct_predictions, total_predictions)
-    save_path = plot_class_accuracies(class_names, accuracies, 'test', MODEL_PATH)
+    save_path = plot_class_accuracies(class_names, accuracies, save_dir, model_path)
     print(f'柱状图已保存到: {save_path}')
 
     print('\n各类别准确率：')
