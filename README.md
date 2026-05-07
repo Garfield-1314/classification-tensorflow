@@ -12,15 +12,6 @@
 This repository provides reproducible training pipelines, model export utilities, and a TFLite INT8 quantization workflow for deploying image classification models on edge devices.
 ---
 
-## Key updates (recent refactor / 2026-05-07)
-
-- **Quantization Tooling**: `train.py` and `train.ipynb` now automatically archive `stage1` and `stage2` `.h5` model files to export folders and clean up temporary files.
-- **Robust TFLite Evaluation**: `model_test.py` now supports automatic detection and handling of both `uint8` and `float32` output types for quantized models.
-- **Workflow Streamlining**: Refactored export pipeline to ensure a clean workspace directory.
-- Added `train.py` — a command-line training and export script refactored from `train.ipynb`.
-
----
-
 
 ## Requirements
 
@@ -108,13 +99,7 @@ Models are exported to timestamped sub-directories under `model/model_YYYYMMDD_H
 
 ## Change Log
 
-### [2026-04-30] Model Export & Testing Optimization
-- **Unified Export Workflow**: Models are now exported into dedicated sub-folders named with timestamps.
-- **Artifact Management**: Automatically saves `labels.txt`, intermediate `.h5` files, training curves, and confusion matrices into the same model folder.
-- **Improved Testing**: `model_test.py` now supports parameter-based calls and automatically saves results to the model's directory.
-- **Notebook Enhancements**: `train.ipynb` now includes a full testing cell calling `model_test.py` directly.
-- **Compatibility**: Fixed type hinting issues for Python 3.8.
-- **Stability**: Fixed dataset caching warnings by ensuring full iteration during warm-up.
+Please refer to [CHANGELOG.md](CHANGELOG.md) for details.
 
 ---
 
