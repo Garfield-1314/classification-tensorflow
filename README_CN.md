@@ -13,11 +13,12 @@
 
 ---
 
-# 主要变化（最近一次重构）
+# 主要变化（最近一次重构 / 2026-05-07）
 
+- **量化工具优化**：`train.py` 和 `train.ipynb` 现在自动归档 `stage1` 和 `stage2` 的 `.h5` 模型文件到独立导出文件夹中，并自动删除临时文件。
+- **鲁棒的 TFLite 评估**：`model_test.py` 现在支持自动检测并处理 `uint8` 或 `float32` 输出类型的量化模型。
+- **流程精简**：重构了导出管道，确保工作区目录整洁。
 - 新增 `train.py` —— 由 `train.ipynb` 重构的命令行训练与导出脚本。
-- 改进 `model_test.py` —— 支持评估 `.tflite` 模型并绘制每类准确率柱状图。
-- 保留 `test/test.py` 作为 MNIST 端到端示例（标签文件生成与 TFLite 导出）。
 
 ---
 
@@ -94,6 +95,7 @@ python model_test.py
 模型将导出至 `model/model_YYYYMMDD_HHMM/` 结构下，包含：
 - `model_YYYYMMDD_HHMM.tflite`: 量化后的 TFLite 模型。
 - `stage1_model.h5`: 阶段一中间模型。
+- `stage2_model.h5`: 阶段二精调后的原始模型（推荐用于断点续训）。
 - `labels.txt`: 类别标签文件。
 - `confusion_matrix.png`: 验证集混淆矩阵。
 - `training_curves.png`: 训练损失与准确率曲线。
