@@ -25,8 +25,12 @@
 ## 运行环境
 
 - 操作系统：Windows 或 Linux
+- TensorFlow：
+  - Windows 环境下最大支持 TensorFlow 2.10（> 2.10 版本无法在 Windows 下使用 GPU 训练）。
+  - Linux 环境下无具体版本限制。
 - Python 3.8（推荐使用虚拟环境）
 - 若需 GPU：请准备匹配的 CUDA 与 cuDNN（依赖 TensorFlow 版本）
+
 
 安装依赖：
 

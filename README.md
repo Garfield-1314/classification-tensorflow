@@ -25,6 +25,9 @@ This repository provides reproducible training pipelines, model export utilities
 ## Requirements
 
 - OS: Windows or Linux
+- TensorFlow:
+  - Windows supports up to TensorFlow 2.10. GPU support is not available for versions > 2.10 on Windows.
+  - No specific limitations for Linux.
 - Python 3.8 (virtual environment recommended)
 - For GPU: compatible CUDA and cuDNN versions for the installed TensorFlow build
 
