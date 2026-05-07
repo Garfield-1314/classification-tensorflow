@@ -208,15 +208,27 @@ def main() -> None:
     # reload model if needed
     model = tf.keras.models.load_model(os.path.join(MODEL_DIR, "stage1_model.h5"))
     history2 = train_model(model, train_ds2, val_ds2, epochs=epochs2)
+    model.save(os.path.join(MODEL_DIR, "stage2_model.h5"))
 
     # Export and evaluation
     tflite_path, model_folder_path = export_tflite(model, val_ds, class_names)
     print(f"TFLite model saved to: {tflite_path}")
 
-    # Save stage 1 model to the model folder as well
+    # Save stage 1 and stage 2 models to the model folder as well
     stage1_h5_dest = os.path.join(model_folder_path, "stage1_model.h5")
     shutil.copy(os.path.join(MODEL_DIR, "stage1_model.h5"), stage1_h5_dest)
     print(f"Stage 1 model saved to: {stage1_h5_dest}")
+
+    stage2_h5_dest = os.path.join(model_folder_path, "stage2_model.h5")
+    shutil.copy(os.path.join(MODEL_DIR, "stage2_model.h5"), stage2_h5_dest)
+    print(f"Stage 2 model saved to: {stage2_h5_dest}")
+
+    # Cleanup temporary .h5 files
+    for h5_file in ["stage1_model.h5", "stage2_model.h5"]:
+        temp_path = os.path.join(MODEL_DIR, h5_file)
+        if os.path.exists(temp_path):
+            os.remove(temp_path)
+            print(f"Removed temporary model: {temp_path}")
 
     cm_save_path = os.path.join(model_folder_path, "confusion_matrix.png")
     evaluate_confusion_matrix(model, val_ds, class_names, save_path=cm_save_path)
