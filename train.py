@@ -140,7 +140,7 @@ def export_tflite(model: tf.keras.Model, validation_raw: tf.data.Dataset, class_
     converter.representative_dataset = representative_dataset
     converter.target_spec.supported_ops = [tf.lite.OpsSet.TFLITE_BUILTINS_INT8]
     converter.inference_input_type = tf.uint8
-    converter.inference_output_type = tf.uint8
+    converter.inference_output_type = tf.float32
 
     tflite_model = converter.convert()
 

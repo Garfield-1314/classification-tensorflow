@@ -67,7 +67,7 @@ def preprocess_image(image: tf.Tensor, input_dtype: type) -> np.ndarray:
     Returns:
         A NumPy array suitable for feeding into the TFLite interpreter.
     """
-    if input_dtype == np.uint8:
+    if input_dtype == np.uint8 or input_dtype == tf.uint8:
         return tf.cast(image, tf.uint8).numpy()
     return (tf.cast(image, tf.float32) / 255.0).numpy()
 
@@ -90,7 +90,17 @@ def predict_batch(
     input_data = np.array(images, dtype=input_dtype)
     interpreter.set_tensor(input_details[0]['index'], input_data)
     interpreter.invoke()
-    return interpreter.get_tensor(output_details[0]['index'])
+    
+    output_data = interpreter.get_tensor(output_details[0]['index'])
+    
+    # If the output is uint8 (fully quantized), dequantize it manually for consistency if needed
+    # But since we changed train.py to float32 output, this won't be strictly necessary for the new model
+    if output_details[0]['dtype'] == np.uint8 or output_details[0]['dtype'] == tf.uint8:
+        scale, zero_point = output_details[0]['quantization']
+        if scale > 0:
+            output_data = (output_data.astype(np.float32) - zero_point) * scale
+            
+    return output_data
 
 
 def evaluate_dataset(
