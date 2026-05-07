@@ -223,6 +223,13 @@ def main() -> None:
     shutil.copy(os.path.join(MODEL_DIR, "stage2_model.h5"), stage2_h5_dest)
     print(f"Stage 2 model saved to: {stage2_h5_dest}")
 
+    # Cleanup temporary .h5 files
+    for h5_file in ["stage1_model.h5", "stage2_model.h5"]:
+        temp_path = os.path.join(MODEL_DIR, h5_file)
+        if os.path.exists(temp_path):
+            os.remove(temp_path)
+            print(f"Removed temporary model: {temp_path}")
+
     cm_save_path = os.path.join(model_folder_path, "confusion_matrix.png")
     evaluate_confusion_matrix(model, val_ds, class_names, save_path=cm_save_path)
 
