@@ -154,8 +154,11 @@ def main() -> None:
     early_stopping = tf.keras.callbacks.EarlyStopping(patience=3, restore_best_weights=True)
 
     model.fit(train_dataset, validation_data=validation_dataset, epochs=1, callbacks=[early_stopping])
-    history = model.history
-    model.save(os.path.join(MODEL_DIR, "stage1_model.h5"))
+    
+    # Save the model directly to the timestamp folder
+    h5_path = os.path.join(model_folder_path, "model.h5")
+    model.save(h5_path)
+    print(f"Model saved to: {h5_path}")
 
     # TFLite export with quantization
     converter = tf.lite.TFLiteConverter.from_keras_model(model)
@@ -166,20 +169,10 @@ def main() -> None:
     converter.inference_output_type = tf.uint8
 
     tflite_model = converter.convert()
-    output_path = os.path.join(model_folder_path, f"{model_folder_name}.tflite")
+    output_path = os.path.join(model_folder_path, "model.tflite")
     with open(output_path, "wb") as f:
         f.write(tflite_model)
     print(f"TFLite model saved to: {output_path}")
-
-    # Remove .h5 files in model dir
-    for file in os.listdir(MODEL_DIR):
-        if file.endswith(".h5"):
-            file_path = os.path.join(MODEL_DIR, file)
-            try:
-                os.remove(file_path)
-                print(f"Removed file: {file_path}")
-            except Exception as exc:
-                print(f"Failed to remove {file_path}: {exc}")
 
     # Evaluation: confusion matrix
     y_pred_probs = model.predict(validation_dataset)

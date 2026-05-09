@@ -2,6 +2,24 @@
 
 ---
 
+## [2026-05-09] 深度代码精简与工作流一致性优化 / Deep Code Streamlining & Workflow Consistency
+
+### 中文 (CN)
+- **遵循 Karpathy 准则**：对全库代码（`train.py`, `train.ipynb`, `test/test.py`, `lib/`）进行了深度精简，减少冗余操作，保持“外科手术式”修改。
+- **文件管理简化**：移除所有冗余的中间文件移动与删除逻辑。现在所有输出（h5, TFLite, 日志, 图表）直接保存至目标时间戳文件夹。
+- **内存管理优化**：在 Notebook 和脚本中移除了冗余的模型重载操作，复用内存中的模型对象，减少磁盘 I/O。
+- **输出名称标准化**：所有导出文件夹内的 TFLite 文件统一命名为 `model.tflite`。
+- **绘图逻辑重构**：`polt_improved.py` 逻辑抽象化，通过指标映射减少重复代码。
+
+### English (EN)
+- **Adhered to Karpathy Guidelines**: Performed deep code streamlining across the entire repository (`train.py`, `train.ipynb`, `test/test.py`, `lib/`) to minimize redundancy.
+- **Simplified File Management**: Removed redundant intermediate file moving and deletion logic. All outputs (h5, TFLite, logs, plots) are now saved directly to the target timestamped folder.
+- **Memory Management**: Eliminated redundant model reloads in both Notebook and scripts, reusing in-memory objects to reduce disk I/O.
+- **Standardized Output Naming**: All exported TFLite files are now consistently named `model.tflite` within their respective folders.
+- **Plotting Logic Refactor**: Abstracted logic in `polt_improved.py` using metric mapping to reduce code duplication.
+
+---
+
 ## [2026-05-07] 工作流优化与脚本重构 / Workflow Optimization & Script Refactor
 
 ### 中文 (CN)

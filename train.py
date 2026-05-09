@@ -122,11 +122,8 @@ def train_model(model: tf.keras.Model, train_ds: tf.data.Dataset, val_ds: tf.dat
     return history
 
 
-def export_tflite(model: tf.keras.Model, validation_raw: tf.data.Dataset, class_names: list, output_dir: str = MODEL_DIR) -> Tuple[str, str]:
-    """Export the provided Keras model to a quantized TFLite file and save labels.
-
-    Returns a tuple (tflite_path, model_folder_path).
-    """
+def export_tflite(model: tf.keras.Model, validation_raw: tf.data.Dataset, class_names: list, model_folder_path: str) -> str:
+    """Export the provided Keras model to a quantized TFLite file and save labels."""
 
     def representative_dataset():
         calibration = (
@@ -144,14 +141,8 @@ def export_tflite(model: tf.keras.Model, validation_raw: tf.data.Dataset, class_
 
     tflite_model = converter.convert()
 
-    # Create folder named with model name and timestamp
-    timestamp = datetime.now().strftime("%Y%m%d_%H%M")
-    model_folder_name = f"model_{timestamp}"
-    model_folder_path = os.path.join(output_dir, model_folder_name)
-    os.makedirs(model_folder_path, exist_ok=True)
-
     # Save TFLite model
-    tflite_name = f"{model_folder_name}.tflite"
+    tflite_name = "model.tflite"
     out_path = os.path.join(model_folder_path, tflite_name)
     with open(out_path, "wb") as f:
         f.write(tflite_model)
@@ -162,7 +153,7 @@ def export_tflite(model: tf.keras.Model, validation_raw: tf.data.Dataset, class_
         for name in class_names:
             f.write(f"{name}\n")
 
-    return out_path, model_folder_path
+    return out_path
 
 
 def evaluate_confusion_matrix(model: tf.keras.Model, val_ds: tf.data.Dataset, class_names: Iterable[str], save_path: Union[str, None] = None) -> None:
@@ -197,38 +188,32 @@ def main() -> None:
     base_dir = '../Datasets/smartcar26_dataset' 
     epochs1 = 30
     epochs2 = 10
+
+    # Create folder named with model name and timestamp
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M")
+    model_folder_path = os.path.join(MODEL_DIR, f"model_{timestamp}")
+    os.makedirs(model_folder_path, exist_ok=True)
+
     # Stage 1: train without augmentation
     train_ds, val_ds, class_names = prepare_datasets(base_dir, augment=False)
     model = build_model(len(class_names))
     history1 = train_model(model, train_ds, val_ds, epochs=epochs1)
-    model.save(os.path.join(MODEL_DIR, "stage1_model.h5"))
+    
+    stage1_path = os.path.join(model_folder_path, "stage1_model.h5")
+    model.save(stage1_path)
+    print(f"Stage 1 model saved to: {stage1_path}")
 
     # Stage 2: fine-tune with augmentation
-    train_ds2, val_ds2, _ = prepare_datasets(base_dir, augment=True)
-    # reload model if needed
-    model = tf.keras.models.load_model(os.path.join(MODEL_DIR, "stage1_model.h5"))
-    history2 = train_model(model, train_ds2, val_ds2, epochs=epochs2)
-    model.save(os.path.join(MODEL_DIR, "stage2_model.h5"))
+    train_ds2, _, _ = prepare_datasets(base_dir, augment=True)
+    history2 = train_model(model, train_ds2, val_ds, epochs=epochs2)
+    
+    stage2_path = os.path.join(model_folder_path, "stage2_model.h5")
+    model.save(stage2_path)
+    print(f"Stage 2 model saved to: {stage2_path}")
 
     # Export and evaluation
-    tflite_path, model_folder_path = export_tflite(model, val_ds, class_names)
+    tflite_path = export_tflite(model, val_ds, class_names, model_folder_path)
     print(f"TFLite model saved to: {tflite_path}")
-
-    # Save stage 1 and stage 2 models to the model folder as well
-    stage1_h5_dest = os.path.join(model_folder_path, "stage1_model.h5")
-    shutil.copy(os.path.join(MODEL_DIR, "stage1_model.h5"), stage1_h5_dest)
-    print(f"Stage 1 model saved to: {stage1_h5_dest}")
-
-    stage2_h5_dest = os.path.join(model_folder_path, "stage2_model.h5")
-    shutil.copy(os.path.join(MODEL_DIR, "stage2_model.h5"), stage2_h5_dest)
-    print(f"Stage 2 model saved to: {stage2_h5_dest}")
-
-    # Cleanup temporary .h5 files
-    for h5_file in ["stage1_model.h5", "stage2_model.h5"]:
-        temp_path = os.path.join(MODEL_DIR, h5_file)
-        if os.path.exists(temp_path):
-            os.remove(temp_path)
-            print(f"Removed temporary model: {temp_path}")
 
     cm_save_path = os.path.join(model_folder_path, "confusion_matrix.png")
     evaluate_confusion_matrix(model, val_ds, class_names, save_path=cm_save_path)
@@ -239,15 +224,12 @@ def main() -> None:
     # Test the model using model_test
     # Assuming test directory is at '../Datasets/smartcar26_dataset/test'
     test_dir = os.path.join(os.path.dirname(base_dir), 'smartcar26_dataset', 'test')
+    if not os.path.exists(test_dir):
+        test_dir = os.path.join(base_dir, 'test')
+
     if os.path.exists(test_dir):
         print(f"\nStarting model test using model_test.py...")
         model_test.main(model_path=tflite_path, test_dir=test_dir)
-    else:
-        # Fallback if specific dataset structure is different
-        test_dir_alt = os.path.join(base_dir, 'test')
-        if os.path.exists(test_dir_alt):
-            print(f"\nStarting model test using model_test.py...")
-            model_test.main(model_path=tflite_path, test_dir=test_dir_alt)
 
     # Cleanup cache directory
     if os.path.exists(CACHE_DIR) and os.path.isdir(CACHE_DIR):
