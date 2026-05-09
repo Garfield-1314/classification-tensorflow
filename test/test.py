@@ -30,7 +30,7 @@ from lib import AU
 IMG_SIZE = (32, 32)
 AUTOTUNE = tf.data.AUTOTUNE
 IMG_SHAPE = IMG_SIZE + (3,)
-MODEL_DIR = "model"
+MODEL_DIR = "train"
 CACHE_DIR = "cache"
 BATCH_SIZE = 32
 
@@ -86,9 +86,9 @@ def main() -> None:
     class_names = [str(i) for i in range(10)]
     print("Class Names:", class_names)
 
-    # Create folder named with model name and timestamp
+    # Create folder named with train and timestamp
     timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M")
-    model_folder_name = f"model_{timestamp}"
+    model_folder_name = f"train_{timestamp}"
     model_folder_path = os.path.join(MODEL_DIR, model_folder_name)
     os.makedirs(model_folder_path, exist_ok=True)
 

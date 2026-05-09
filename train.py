@@ -33,7 +33,7 @@ from lib import AU, polt_improved  # noqa: E402
 IMG_SIZE = (160, 160)
 AUTOTUNE = tf.data.AUTOTUNE
 IMG_SHAPE = IMG_SIZE + (3,)
-MODEL_DIR = "model"
+MODEL_DIR = "train"
 CACHE_DIR = "cache"
 BATCH_SIZE = 16
 
@@ -189,9 +189,9 @@ def main() -> None:
     epochs1 = 30
     epochs2 = 10
 
-    # Create folder named with model name and timestamp
+    # Create folder named with train and timestamp
     timestamp = datetime.now().strftime("%Y%m%d_%H%M")
-    model_folder_path = os.path.join(MODEL_DIR, f"model_{timestamp}")
+    model_folder_path = os.path.join(MODEL_DIR, f"train_{timestamp}")
     os.makedirs(model_folder_path, exist_ok=True)
 
     # Stage 1: train without augmentation
