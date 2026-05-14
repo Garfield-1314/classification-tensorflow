@@ -376,7 +376,7 @@ class TrainWindow(QMainWindow):
             try:
                 self.params.update({
                     "model_type": self.model_combo.currentText(),
-                    "alpha": float(self.alpha_input.text()),
+                    "alpha": float(self.alpha_input.currentText()),
                     "img_size": (int(self.size_input.text()), int(self.size_input.text())),
                     "batch_size": int(self.batch_input.text()),
                     "learning_rate": float(self.lr_input.text()),
@@ -391,6 +391,15 @@ class TrainWindow(QMainWindow):
             except Exception:
                 pass
         self.stacked_widget.setCurrentIndex(index)
+
+    def _on_model_changed(self, model_name):
+        self.alpha_input.clear()
+        if model_name == "MobileNetV1":
+            self.alpha_input.addItems(["0.25", "0.50", "0.75", "1.0"])
+            self.alpha_input.setCurrentText("0.25")
+        else: # MobileNetV2
+            self.alpha_input.addItems(["0.35", "0.50", "0.75", "1.0", "1.3", "1.4"])
+            self.alpha_input.setCurrentText("0.35")
 
     # --- 页面创建方法 ---
     
@@ -449,8 +458,14 @@ class TrainWindow(QMainWindow):
         h_row1.addWidget(self.model_combo)
         
         h_row1.addWidget(QLabel("宽度系数 (Alpha):"))
-        self.alpha_input = QLineEdit("0.35")
+        self.alpha_input = QComboBox()
+        # 默认 V2 的选项
+        self.alpha_input.addItems(["0.35", "0.50", "0.75", "1.0", "1.3", "1.4"])
+        self.alpha_input.setCurrentText("0.35")
         h_row1.addWidget(self.alpha_input)
+        
+        # 根据模型类型动态改变可选的 alpha
+        self.model_combo.currentTextChanged.connect(self._on_model_changed)
         
         h_row1.addWidget(QLabel("输入尺寸:"))
         self.size_input = QLineEdit("160")
@@ -734,7 +749,7 @@ class TrainWindow(QMainWindow):
         try:
             self.params.update({
                 "model_type": self.model_combo.currentText(),
-                "alpha": float(self.alpha_input.text()),
+                "alpha": float(self.alpha_input.currentText()),
                 "img_size": (int(self.size_input.text()), int(self.size_input.text())),
                 "batch_size": int(self.batch_input.text()),
                 "learning_rate": float(self.lr_input.text()),

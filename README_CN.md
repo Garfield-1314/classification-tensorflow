@@ -55,7 +55,7 @@ classification-tensorflow/
 
 ### 1. 使用 GUI 训练 (推荐)
 
-项目提供了一个功能齐全的 PyQt5 界面，支持参数配置、多阶段学习率控制、实时训练曲线及自动化 TFLite 输出与评估：
+项目提供了一个功能齐全的 PyQt5 界面，支持参数配置（支持不同 MobileNet 版本的动态宽度系数切换）、多阶段早停与专属学习率控制、实时训练曲线及自动化 TFLite 导出与评估：
 
 ```bash
 python qt/train_gui.py
