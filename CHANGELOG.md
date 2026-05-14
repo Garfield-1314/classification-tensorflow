@@ -2,6 +2,22 @@
 
 ---
 
+## [2026-05-14] 图形界面完善与评估分离 / GUI Enhancements & Evaluation Isolation
+
+### 中文 (CN)
+- **GUI 交互体验优化**：优化 PyQt5 训练界面布局，默认使用 1080p 缩放适配，修复了按钮黑色文字不可见的样式问题，统一了终端绿字输出，优化了底部进度条表现。
+- **评估隔离重构**：将 GUI 测试专用的模型评估代码抽离至 `modules/model_test_utils.py`，与 CLI 核心执行代码分离，提高了项目的向后兼容性和代码健壮性。
+- **配置与参数扩展**：模型配置界面新增第二阶段微调专属的学习率调整选项。
+- **修复 TensorFlow 评估警告**：修复了在 TFLite 导出预热阶段数据集迭代抓取的缓存截断警告；修复了 GUI 在模型评估时因为返回值类型不匹配造成的程序崩溃；优雅释放 TFLite 解释器，消除了底层的 `Delegate ` 错误输出。
+
+### English (EN)
+- **GUI Interaction Optimizations**: Refined the PyQt5 training interface layout with 1080p scaling by default, fixed invisible black text in buttons via robust QSS, unified the terminal output font color to green, and improved progress bar stability.
+- **Evaluation Isolation**: Extracted GUI-specific model test code into `modules/model_test_utils.py`, separating it from the main CLI workflows for improved backward compatibility.
+- **Expanded Configurations**: Added specific learning rate input option for the Phase 2 fine-tuning within the GUI settings.
+- **TF Evaluation Warnings Resolved**: Fixed Dataset pipeline caching truncation warnings during TFLite extraction, rectified tuple unpacking crashes in GUI evaluations, and cleanly garbage-collected the TFLite Interpreter to prevent missing Delegate library spam.
+
+---
+
 ## [2026-05-09] 深度代码精简与工作流一致性优化 / Deep Code Streamlining & Workflow Consistency
 
 ### 中文 (CN)

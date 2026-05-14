@@ -36,11 +36,11 @@ def plot_combined_curves_improved(history_list: Iterable, save_dir: Union[str, P
     save_path = Path(save_dir) / "training_curves.png"
     save_path.parent.mkdir(parents=True, exist_ok=True)
 
-    plt.figure(figsize=(14, 6))
+    plt.figure(figsize=(10, 4)) # 适度加宽，防止标题挤占
     for i, (key, (train_vals, val_vals, c1, c2)) in enumerate(metrics.items(), 1):
         plt.subplot(1, 2, i)
-        plt.plot(all_epochs, train_vals, label=f"Train {key.capitalize()}", color=c1)
-        plt.plot(all_epochs, val_vals, label=f"Val {key.capitalize()}", color=c2, linestyle="--")
+        plt.plot(all_epochs, train_vals, label=f"Train {key.capitalize()}", color=c1, marker='o', markersize=6)
+        plt.plot(all_epochs, val_vals, label=f"Val {key.capitalize()}", color=c2, linestyle="--", marker='o', markersize=6)
         plt.title(f"Combined {key.capitalize()} Curves")
         plt.xlabel("Global Epochs")
         plt.ylabel(key.capitalize())
@@ -48,7 +48,7 @@ def plot_combined_curves_improved(history_list: Iterable, save_dir: Union[str, P
 
     plt.tight_layout()
     plt.savefig(save_path)
-    plt.show()
+    # plt.show()  # 注释掉 plt.show() 以防止在子线程中导致的界面卡死
     print(f"Image saved to: {save_path}")
     return save_path
 
