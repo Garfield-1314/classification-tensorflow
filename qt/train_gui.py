@@ -762,9 +762,14 @@ class TrainWindow(QMainWindow):
         # 改进：如果不存在 train 目录，尝试直接从根目录读取类别
         p = Path(base_dir) / "train"
         if not p.exists():
-            p = Path(base_dir)
+            # 同时也检查是否已经有我们处理过的目录
+            processed_p = Path(base_dir) / "processed_dataset" / "train"
+            if processed_p.exists():
+                p = processed_p
+            else:
+                p = Path(base_dir)
             
-        exclude_dirs = ["train", "val", "test", "cache", "model", "build", "modules", "qt", "test", "lib", ".git", ".github"]
+        exclude_dirs = ["train", "val", "test", "cache", "model", "build", "modules", "qt", "test", "lib", ".git", ".github", "processed_dataset"]
         cats = [d for d in p.iterdir() if d.is_dir() and d.name not in exclude_dirs]
         if not cats: return
         
@@ -830,6 +835,37 @@ class TrainWindow(QMainWindow):
     def run_full_pipeline(self):
         try:
             p = self.params
+            self.signals.log_signal.emit("="*50)
+            self.signals.log_signal.emit("开始初始化训练环境...")
+            
+            # 打印详细设备信息
+            gpus = tf.config.list_physical_devices('GPU')
+            if gpus:
+                self.signals.log_signal.emit(f"训练设备: GPU (检测到 {len(gpus)} 个)")
+                try:
+                    # 使用 subprocess 调用 nvidia-smi 获取更详细的信息
+                    import subprocess
+                    cmd = "nvidia-smi --query-gpu=name,memory.total,compute_cap,driver_version --format=csv,noheader,nounits"
+                    res = subprocess.check_output(cmd, shell=True).decode().strip().split('\n')
+                    for i, line in enumerate(res):
+                        name, mem, cap, driver = line.split(', ')
+                        self.signals.log_signal.emit(f" -> GPU {i}: {name}")
+                        self.signals.log_signal.emit(f"    显存总量: {mem} MB")
+                        self.signals.log_signal.emit(f"    硬件算力: {cap}")
+                        self.signals.log_signal.emit(f"    驱动版本: {driver}")
+                    
+                except Exception:
+                    self.signals.log_signal.emit(f"设备详情: {[gpu.name for gpu in gpus]}")
+                    self.signals.log_signal.emit("(无法获取显存详情，请确保安装了 NVIDIA 驱动)")
+            else:
+                self.signals.log_signal.emit("训练设备: CPU (未检测到兼容的 NVIDIA GPU)")
+
+            # 打印系统信息
+            import platform
+            self.signals.log_signal.emit(f"TensorFlow 版本: {tf.__version__}")
+            self.signals.log_signal.emit(f"Python 版本: {platform.python_version()}")
+            self.signals.log_signal.emit("-" * 30)
+
             self.signals.log_signal.emit("加载数据中...")
             self.signals.log_signal.emit("正在预热数据集图像至缓存，请耐心等待...")
             self.train_ds, self.val_ds, self.validation_raw, self.class_names = model_utils.prepare_datasets(

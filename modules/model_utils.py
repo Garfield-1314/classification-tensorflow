@@ -7,25 +7,32 @@ from lib import AU
 def split_dataset(base_dir, split_ratio=(0.75, 0.2, 0.05)):
     """
     如果 base_dir 下没有 train/val 文件夹，则自动按照比例划分。
-    假设 base_dir 下直接是类别文件夹。
+    改进：不再修改原始文件夹，而是在 base_dir 下创建一个 processed_dataset 文件夹。
+    返回实际使用的数据集路径。
     """
     train_dir = os.path.join(base_dir, "train")
     val_dir = os.path.join(base_dir, "val")
-    test_dir = os.path.join(base_dir, "test")
 
-    # 检查是否已经划分 (只要 train 存在我们就认为可能已经划过了，避免重复处理)
-    if os.path.exists(train_dir):
-        return
+    # 1. 检查是否已经存在 train/val 结构
+    if os.path.exists(train_dir) and os.path.exists(val_dir):
+        return base_dir
 
-    # 获取所有类别（排除已存在的 train/val/test/cache 等文件夹）
-    exclude_dirs = ["train", "val", "test", "cache", "model", "build", "modules", "qt", "test", "lib", ".git", ".github"]
+    # 2. 检查是否已经存在处理过的目录
+    processed_dir = os.path.join(base_dir, "processed_dataset")
+    if os.path.exists(processed_dir):
+        return processed_dir
+
+    # 3. 开始划分逻辑
+    # 获取所有类别（排除一些可能的干扰项）
+    exclude_dirs = ["train", "val", "test", "cache", "model", "processed_dataset", "build", "modules", "qt", "lib", ".git"]
     categories = [d for d in os.listdir(base_dir) 
                   if os.path.isdir(os.path.join(base_dir, d)) and d not in exclude_dirs]
 
     if not categories:
-        return
+        return base_dir # 如果找不到类别，退回到原始目录交由 tf 处理（可能会报错，但保证逻辑不崩）
 
-    print(f"检测到数据集未划分，正在按比例 {split_ratio} 自动划分...")
+    print(f"检测到数据集未划分，正在处理至 {processed_dir} ...")
+    os.makedirs(processed_dir, exist_ok=True)
     
     for cat in categories:
         cat_path = os.path.join(base_dir, cat)
@@ -39,39 +46,29 @@ def split_dataset(base_dir, split_ratio=(0.75, 0.2, 0.05)):
         n_train = int(n_total * split_ratio[0])
         n_val = int(n_total * split_ratio[1])
 
-        train_cat_dir = os.path.join(train_dir, cat)
-        val_cat_dir = os.path.join(val_dir, cat)
-        test_cat_dir = os.path.join(test_dir, cat)
-
-        os.makedirs(train_cat_dir, exist_ok=True)
-        os.makedirs(val_cat_dir, exist_ok=True)
-        os.makedirs(test_cat_dir, exist_ok=True)
-
         for i, img in enumerate(images):
             src = os.path.join(cat_path, img)
             if i < n_train:
-                dst = os.path.join(train_cat_dir, img)
+                tag = "train"
             elif i < n_train + n_val:
-                dst = os.path.join(val_cat_dir, img)
+                tag = "val"
             else:
-                dst = os.path.join(test_cat_dir, img)
-            shutil.move(src, dst)
-        
-        # 尝试移除空的原始类别文件夹
-        try:
-            os.rmdir(cat_path)
-        except OSError:
-            pass
+                tag = "test"
+            
+            dst_dir = os.path.join(processed_dir, tag, cat)
+            os.makedirs(dst_dir, exist_ok=True)
+            shutil.copy2(src, os.path.join(dst_dir, img)) # 使用 copy2 保留元数据，且不破坏原文件
 
-    print("数据集划分完成。")
+    print(f"数据集备份并划分完成，存储于: {processed_dir}")
+    return processed_dir
 
 def prepare_datasets(base_dir, img_size=(160, 160), batch_size=16, split_ratio=(0.75, 0.2, 0.05)):
     """从界面参数准备数据集"""
-    # 自动划分数据集
-    split_dataset(base_dir, split_ratio=split_ratio)
+    # 自动划分数据集，获取处理后的路径
+    working_dir = split_dataset(base_dir, split_ratio=split_ratio)
     
-    train_dir = os.path.join(base_dir, "train")
-    valid_dir = os.path.join(base_dir, "val")
+    train_dir = os.path.join(working_dir, "train")
+    valid_dir = os.path.join(working_dir, "val")
     
     train_raw = tf.keras.preprocessing.image_dataset_from_directory(
         train_dir, batch_size=batch_size, image_size=img_size
