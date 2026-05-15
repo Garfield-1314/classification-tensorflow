@@ -147,7 +147,8 @@ class TrainWindow(QMainWindow):
             "epochs_stage1": 10,
             "epochs_stage2": 10,
             "run_stage2": True,
-            "model_path": ""
+            "model_path": "",
+            "split_ratio": (0.75, 0.2, 0.05)
         }
         
         self.signals = TrainSignals()
@@ -420,12 +421,39 @@ class TrainWindow(QMainWindow):
         
         path_layout = QHBoxLayout()
         self.path_input = QLineEdit()
-        self.path_input.setPlaceholderText("选择数据集根目录 (包含 train/val 文件夹)")
+        self.path_input.setPlaceholderText("选择数据集根目录 (可包含 train/val 文件夹，或直接放类别文件夹)")
         btn_browse = QPushButton("浏览")
         btn_browse.clicked.connect(self.browse_folder)
         path_layout.addWidget(self.path_input)
         path_layout.addWidget(btn_browse)
         layout.addLayout(path_layout)
+
+        # 划分比例设置
+        split_group = QGroupBox("数据集自动划分配置")
+        split_group.setToolTip("若根目录下没有 train/val 文件夹，将自动按照此比例进行划分。")
+        split_layout = QHBoxLayout(split_group)
+        
+        split_layout.addWidget(QLabel("训练集:"))
+        self.split_train = QLineEdit("0.75")
+        self.split_train.setFixedWidth(50)
+        split_layout.addWidget(self.split_train)
+        
+        split_layout.addWidget(QLabel("验证集:"))
+        self.split_val = QLineEdit("0.2")
+        self.split_val.setFixedWidth(50)
+        split_layout.addWidget(self.split_val)
+        
+        split_layout.addWidget(QLabel("测试集:"))
+        self.split_test = QLineEdit("0.05")
+        self.split_test.setFixedWidth(50)
+        split_layout.addWidget(self.split_test)
+        
+        split_desc = QLabel("(总和应为 1.0)")
+        split_desc.setStyleSheet("color: #666; font-size: 11px;")
+        split_layout.addWidget(split_desc)
+        split_layout.addStretch()
+        
+        layout.addWidget(split_group)
         
         layout.addWidget(QLabel("数据集预览:"))
         self.scroll_area = QScrollArea()
@@ -730,14 +758,22 @@ class TrainWindow(QMainWindow):
     def update_preview(self, base_dir):
         for i in reversed(range(self.preview_layout.count())): 
             self.preview_layout.itemAt(i).widget().setParent(None)
+        
+        # 改进：如果不存在 train 目录，尝试直接从根目录读取类别
         p = Path(base_dir) / "train"
-        if not p.exists(): return
-        cats = [d for d in p.iterdir() if d.is_dir()]
+        if not p.exists():
+            p = Path(base_dir)
+            
+        exclude_dirs = ["train", "val", "test", "cache", "model", "build", "modules", "qt", "test", "lib", ".git", ".github"]
+        cats = [d for d in p.iterdir() if d.is_dir() and d.name not in exclude_dirs]
+        if not cats: return
+        
         self.info_label.setText(f"类别: {', '.join([c.name for c in cats])}")
         all_imgs = []
         for c in cats:
             for f in c.glob("*"):
                 if f.suffix.lower() in [".jpg", ".png", ".jpeg"]: all_imgs.append((f, c.name))
+        
         if not all_imgs: return
         samples = random.sample(all_imgs, min(len(all_imgs), 8))
         for img_p, name in samples:
@@ -749,6 +785,18 @@ class TrainWindow(QMainWindow):
 
     def go_to_config(self):
         if not os.path.exists(self.path_input.text()): return
+        try:
+            r1 = float(self.split_train.text())
+            r2 = float(self.split_val.text())
+            r3 = float(self.split_test.text())
+            if abs(r1 + r2 + r3 - 1.0) > 1e-4:
+                QMessageBox.warning(self, "参数错误", "划分比例总和必须为 1.0")
+                return
+            self.params["split_ratio"] = (r1, r2, r3)
+        except ValueError:
+            QMessageBox.warning(self, "参数错误", "请输入有效的数字比例")
+            return
+
         self.params["base_dir"] = self.path_input.text()
         self.nav_list.setCurrentRow(1)
 
@@ -784,7 +832,12 @@ class TrainWindow(QMainWindow):
             p = self.params
             self.signals.log_signal.emit("加载数据中...")
             self.signals.log_signal.emit("正在预热数据集图像至缓存，请耐心等待...")
-            self.train_ds, self.val_ds, self.validation_raw, self.class_names = model_utils.prepare_datasets(p["base_dir"], img_size=p["img_size"], batch_size=p["batch_size"])
+            self.train_ds, self.val_ds, self.validation_raw, self.class_names = model_utils.prepare_datasets(
+                p["base_dir"], 
+                img_size=p["img_size"], 
+                batch_size=p["batch_size"],
+                split_ratio=p["split_ratio"]
+            )
             self.model = model_utils.build_model(len(self.class_names), model_type=p["model_type"], alpha=p["alpha"], img_size=p["img_size"], dropout_rate=p["dropout_rate"])
             self.signals.log_signal.emit("数据预热完毕，缓存构建成功！")
             
