@@ -10,17 +10,17 @@
 [![TFLite](https://img.shields.io/badge/TFLite-INT8_Quantized-green.svg)](https://www.tensorflow.org/lite)
 
 This repository provides reproducible training pipelines, model export utilities, and a TFLite INT8 quantization workflow for deploying image classification models on edge devices.
----
 
+---
 
 ## Requirements
 
-- OS: Windows or Linux
-- TensorFlow:
+- **OS**: Windows or Linux
+- **TensorFlow**:
   - Windows supports up to TensorFlow 2.10. GPU support is not available for versions > 2.10 on Windows.
   - No specific limitations for Linux.
-- Python 3.8 (virtual environment recommended)
-- For GPU: compatible CUDA and cuDNN versions for the installed TensorFlow build
+- **Python 3.8** (virtual environment recommended)
+- **For GPU**: Compatible CUDA and cuDNN versions for the installed TensorFlow build
 
 Install dependencies:
 
@@ -30,25 +30,50 @@ pip install -r requirements.txt -i https://pypi.tuna.tsinghua.edu.cn/simple
 
 ---
 
-## Repository layout
+## Repository Layout
 
 ```text
 classification-tensorflow/
 ├── train.ipynb          # Jupyter notebook (interactive, updated export workflow)
 ├── train.py             # CLI training and export script (updated export workflow)
+├── qt/
+│   └── train_gui.py     # PyQt5 training GUI (Recommended)
 ├── model_test.py        # Evaluate .tflite models and plot per-class accuracies
 ├── requirements.txt     # Python dependencies
 ├── test/                # Example & test scripts
 │   ├── GPU_test.py      # GPU availability check
 │   └── test.py          # MNIST end-to-end example (updated export workflow)
 ├── lib/                 # Utilities (preprocessing, plotting, etc.)
+├── modules/             # Core logic (model utils, export utils, etc.)
 ├── model/               # Output models (sub-folders for each export)
 └── cache/               # Runtime caches
 ```
 
 ---
 
-## Quick start
+## Quick Start
+
+### 1. Training with GUI (Recommended)
+
+The project provides a fully-featured PyQt5 interface that supports parameter configuration (dynamic width multiplier for different MobileNet versions), multi-stage early stopping with dedicated learning rates, real-time training curves, and automated TFLite export & evaluation:
+
+```bash
+python qt/train_gui.py
+```
+### 2. Building Executable (EXE)
+
+You can package the project into a standalone Windows executable using PyInstaller:
+
+1. **Install PyInstaller**:
+   ```bash
+   pip install pyinstaller
+   ```
+2. **Run Build**:
+   ```bash
+   pyinstaller train_gui.spec
+   ```
+   After completion, you can find `train_gui.exe` in the `dist/train_gui/` directory.
+### 2. Training with Scripts
 
 Check GPU availability:
 
@@ -84,7 +109,7 @@ python model_test.py
 
 ---
 
-## Output conventions
+## Output Conventions
 
 Models are exported to timestamped sub-directories under `model/model_YYYYMMDD_HHMM/` containing:
 - `model_YYYYMMDD_HHMM.tflite`: Quantized TFLite model.
@@ -108,7 +133,6 @@ Please refer to [CHANGELOG.md](CHANGELOG.md) for details.
 - [TensorFlow Lite Guide](https://www.tensorflow.org/lite/guide)
 - [MobileNetV2 Paper](https://arxiv.org/abs/1801.04381)
 
----
 
 
 

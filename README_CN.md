@@ -15,13 +15,12 @@
 
 ## 运行环境
 
-- 操作系统：Windows 或 Linux
-- TensorFlow：
+- **操作系统**: Windows 或 Linux
+- **TensorFlow**:
   - Windows 环境下最大支持 TensorFlow 2.10（> 2.10 版本无法在 Windows 下使用 GPU 训练）。
   - Linux 环境下无具体版本限制。
-- Python 3.8（推荐使用虚拟环境）
-- 若需 GPU：请准备匹配的 CUDA 与 cuDNN（依赖 TensorFlow 版本）
-
+- **Python 3.8**（推荐使用虚拟环境）
+- **若需 GPU**: 请准备匹配的 CUDA 与 cuDNN（依赖 TensorFlow 版本）
 
 安装依赖：
 
@@ -38,13 +37,14 @@ classification-tensorflow/
 ├── train.ipynb          # Jupyter notebook（交互式，已更新导出流程）
 ├── train.py             # 命令行训练与导出脚本（已更新导出流程）
 ├── qt/
-│   └── train_gui.py     # PyQt5 训练界面
+│   └── train_gui.py     # PyQt5 训练界面（推荐使用）
 ├── model_test.py        # 评估 .tflite 模型并绘制每类准确率
 ├── requirements.txt     # 依赖列表
 ├── test/                # 示例与测试脚本
 │   ├── GPU_test.py      # 检查 GPU 可用性
 │   └── test.py          # MNIST 端到端示例（已更新导出流程）
 ├── lib/                 # 工具库（预处理、绘图等）
+├── modules/             # 核心逻辑封装（模型构造、导出、评估等）
 ├── model/               # 输出模型（每个导出任务拥有独立子文件夹）
 └── cache/               # 运行时缓存
 ```
@@ -61,7 +61,21 @@ classification-tensorflow/
 python qt/train_gui.py
 ```
 
-### 2. 使用脚本训练
+### 2. 构建可执行文件 (EXE)
+
+你可以使用 PyInstaller 将项目打包为独立的 Windows 可执行文件：
+
+1. **安装 PyInstaller**:
+   ```bash
+   pip install pyinstaller
+   ```
+2. **开始打包**:
+   ```bash
+   pyinstaller train_gui.spec
+   ```
+   打包完成后，可在 `dist/train_gui/` 目录下找到 `train_gui.exe`。
+
+### 3. 使用脚本训练
 
 检查 GPU 可用性：
 
