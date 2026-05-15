@@ -38,12 +38,14 @@ CACHE_DIR = "cache"
 BATCH_SIZE = 16
 
 
-def prepare_datasets(base_dir: str, augment: bool = False) -> Tuple[tf.data.Dataset, tf.data.Dataset, list]:
+def prepare_datasets(base_dir: str, augment: bool = False, img_size: Tuple[int, int] = IMG_SIZE, batch_size: int = BATCH_SIZE) -> Tuple[tf.data.Dataset, tf.data.Dataset, list]:
     """Prepare train/validation datasets from a directory.
 
     Args:
         base_dir: Root directory that contains `train` and `val` subfolders.
         augment: Whether to apply augmentation to training pipeline.
+        img_size: Tuple of (height, width).
+        batch_size: Number of samples per batch.
 
     Returns:
         A tuple (train_dataset, validation_dataset, class_names).
@@ -53,10 +55,10 @@ def prepare_datasets(base_dir: str, augment: bool = False) -> Tuple[tf.data.Data
     valid_dir = os.path.join(base_dir, "val")
 
     train_raw = tf.keras.preprocessing.image_dataset_from_directory(
-        train_dir, batch_size=BATCH_SIZE, image_size=IMG_SIZE
+        train_dir, batch_size=batch_size, image_size=img_size
     )
     validation_raw = tf.keras.preprocessing.image_dataset_from_directory(
-        valid_dir, batch_size=BATCH_SIZE, image_size=IMG_SIZE
+        valid_dir, batch_size=batch_size, image_size=img_size
     )
 
     class_names = train_raw.class_names
@@ -83,18 +85,25 @@ def prepare_datasets(base_dir: str, augment: bool = False) -> Tuple[tf.data.Data
     return train_ds, val_ds, class_names
 
 
-def build_model(num_classes: int) -> tf.keras.Model:
-    """Build and return a MobileNetV2-based classifier."""
+def build_model(num_classes: int, model_type: str = "MobileNetV2", alpha: float = 0.35, img_size: Tuple[int, int] = IMG_SIZE, dropout_rate: float = 0.8) -> tf.keras.Model:
+    """Build and return a MobileNetV1 or V2-based classifier."""
 
-    base_model = tf.keras.applications.MobileNetV2(
-        input_shape=IMG_SHAPE, include_top=False, pooling="avg", alpha=0.35, weights="imagenet"
-    )
+    img_shape = img_size + (3,)
+
+    if model_type == "MobileNetV1":
+        base_model = tf.keras.applications.MobileNet(
+            input_shape=img_shape, include_top=False, pooling="avg", alpha=alpha, weights="imagenet"
+        )
+    else:
+        base_model = tf.keras.applications.MobileNetV2(
+            input_shape=img_shape, include_top=False, pooling="avg", alpha=alpha, weights="imagenet"
+        )
 
     model = tf.keras.Sequential(
         [
             tf.keras.layers.Rescaling(1.0 / 255),
             base_model,
-            tf.keras.layers.Dropout(0.8),
+            tf.keras.layers.Dropout(dropout_rate),
             tf.keras.layers.Dense(num_classes, activation="softmax"),
         ]
     )
@@ -166,7 +175,7 @@ def evaluate_confusion_matrix(model: tf.keras.Model, val_ds: tf.data.Dataset, cl
     from sklearn.metrics import confusion_matrix
 
     cm = confusion_matrix(y_true, y_pred)
-    plt.figure(figsize=(8, 6))
+    plt.figure() # 移除 figsize
     sns.heatmap(cm, annot=True, cmap="Blues", fmt="d", xticklabels=class_names, yticklabels=class_names)
     plt.xlabel("Predicted Label")
     plt.ylabel("True Label")
@@ -176,7 +185,7 @@ def evaluate_confusion_matrix(model: tf.keras.Model, val_ds: tf.data.Dataset, cl
         plt.savefig(save_path, dpi=300, bbox_inches='tight')
         print(f"Confusion matrix saved to: {save_path}")
     
-    plt.show()
+    # plt.show() # 注释掉以防止在子线程中导致的界面卡死
 
 
 def main() -> None:

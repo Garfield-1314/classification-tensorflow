@@ -37,6 +37,8 @@ pip install -r requirements.txt -i https://pypi.tuna.tsinghua.edu.cn/simple
 classification-tensorflow/
 ├── train.ipynb          # Jupyter notebook（交互式，已更新导出流程）
 ├── train.py             # 命令行训练与导出脚本（已更新导出流程）
+├── qt/
+│   └── train_gui.py     # PyQt5 训练界面
 ├── model_test.py        # 评估 .tflite 模型并绘制每类准确率
 ├── requirements.txt     # 依赖列表
 ├── test/                # 示例与测试脚本
@@ -50,6 +52,16 @@ classification-tensorflow/
 ---
 
 ## 快速开始
+
+### 1. 使用 GUI 训练 (推荐)
+
+项目提供了一个功能齐全的 PyQt5 界面，支持参数配置（支持不同 MobileNet 版本的动态宽度系数切换）、多阶段早停与专属学习率控制、实时训练曲线及自动化 TFLite 导出与评估：
+
+```bash
+python qt/train_gui.py
+```
+
+### 2. 使用脚本训练
 
 检查 GPU 可用性：
 
