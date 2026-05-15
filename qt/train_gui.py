@@ -1,6 +1,13 @@
 ﻿import sys
 import os
 import threading
+
+# --- 核心改进：解决打包为带界面的 EXE 模式下 sys.stdout 为 None 的问题 ---
+if sys.stdout is None:
+    sys.stdout = open(os.devnull, 'w')
+if sys.stderr is None:
+    sys.stderr = open(os.devnull, 'w')
+
 from PyQt5.QtWidgets import (QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, 
                              QPushButton, QLabel, QFileDialog, QTextEdit, QProgressBar, 
                              QLineEdit, QComboBox, QGridLayout, QStackedWidget, QCheckBox, 
