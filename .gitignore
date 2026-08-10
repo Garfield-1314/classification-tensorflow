@@ -9,3 +9,6 @@
 /build/
 /dist/
 /model
+
+.github
+.vscode
